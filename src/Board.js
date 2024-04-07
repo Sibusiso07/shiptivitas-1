@@ -3,6 +3,8 @@ import Dragula from 'dragula';
 import 'dragula/dist/dragula.css';
 import Swimlane from './Swimlane';
 import './Board.css';
+import $ from 'jquery';
+
 
 export default class Board extends React.Component {
   constructor(props) {
@@ -15,12 +17,31 @@ export default class Board extends React.Component {
         complete: clients.filter(client => client.status && client.status === 'complete'),
       }
     }
+
     this.swimlanes = {
       backlog: React.createRef(),
       inProgress: React.createRef(),
       complete: React.createRef(),
     }
   }
+
+  componentDidMount = () => {
+    // Using the Dragula package to move the items between the swimlanes
+    const containers = Object.values(this.swimlanes).map(ref => ref.current);
+    this.drake = Dragula(containers);
+
+    this.drake.on('drop', (el, target, source, sibling) => {
+      // Accessing the className of the items inside the target swimlane, and assigning it to the a variable
+      const newClass = Array.from(target.children).map(child => child.className)[0];
+      // Removing the current class of the new item and assigning a new one
+      $(el).removeClass(el.className).addClass(newClass);
+    });
+  }
+
+  componentWillUnmount() {
+    this.drake.destroy();
+  }
+
   getClients() {
     return [
       ['1','Stark, White and Abbott','Cloned Optimal Architecture', 'in-progress'],
@@ -50,6 +71,7 @@ export default class Board extends React.Component {
       status: companyDetails[3],
     }));
   }
+  
   renderSwimlane(name, clients, ref) {
     return (
       <Swimlane name={name} clients={clients} dragulaRef={ref}/>
